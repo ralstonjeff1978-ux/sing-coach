@@ -1,0 +1,119 @@
+{
+  "sample_rate": 44100,
+  "duration_s": 9.95,
+  "lead_in_s": 2.0,
+  "vibrato_rate_hz": 5.5,
+  "vibrato_depth_cents": 40.0,
+  "notes": [
+    {
+      "index": 0,
+      "start": 2.0,
+      "end": 2.6,
+      "midi": 60,
+      "hz": 261.626,
+      "label": "C4 plain",
+      "vibrato": false,
+      "slide": false,
+      "quiet": false
+    },
+    {
+      "index": 1,
+      "start": 2.6,
+      "end": 3.0,
+      "midi": 62,
+      "hz": 293.665,
+      "label": "D4 short",
+      "vibrato": false,
+      "slide": false,
+      "quiet": false
+    },
+    {
+      "index": 2,
+      "start": 3.0,
+      "end": 3.8,
+      "midi": 64,
+      "hz": 329.628,
+      "label": "E4 vibrato",
+      "vibrato": true,
+      "slide": false,
+      "quiet": false
+    },
+    {
+      "index": 3,
+      "start": 3.8,
+      "end": 4.3,
+      "midi": 65,
+      "hz": 349.228,
+      "label": "F4",
+      "vibrato": false,
+      "slide": false,
+      "quiet": false
+    },
+    {
+      "index": 5,
+      "start": 4.65,
+      "end": 5.65,
+      "midi": 67,
+      "hz": 391.995,
+      "label": "G4 vibrato long",
+      "vibrato": true,
+      "slide": false,
+      "quiet": false
+    },
+    {
+      "index": 6,
+      "start": 5.65,
+      "end": 6.1,
+      "midi": 64,
+      "hz": 329.628,
+      "label": "E4",
+      "vibrato": false,
+      "slide": false,
+      "quiet": false
+    },
+    {
+      "index": 7,
+      "start": 6.1,
+      "end": 6.8,
+      "midi": 72,
+      "hz": 523.251,
+      "label": "C5 leap up",
+      "vibrato": false,
+      "slide": false,
+      "quiet": false
+    },
+    {
+      "index": 9,
+      "start": 7.1,
+      "end": 8.0,
+      "midi": 69,
+      "hz": 440.0,
+      "label": "A4 slide-from",
+      "vibrato": true,
+      "slide": true,
+      "quiet": false
+    },
+    {
+      "index": 10,
+      "start": 8.0,
+      "end": 8.75,
+      "midi": 65,
+      "hz": 349.228,
+      "label": "F4 slide-to",
+      "vibrato": false,
+      "slide": false,
+      "quiet": false
+    },
+    {
+      "index": 11,
+      "start": 8.75,
+      "end": 9.95,
+      "midi": 60,
+      "hz": 261.626,
+      "label": "C4 quiet ending",
+      "vibrato": false,
+      "slide": false,
+      "quiet": true
+    }
+  ]
+}

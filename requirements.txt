@@ -1,0 +1,45 @@
+# SingCoach dependencies — Python 3.12 on Windows
+#
+# Deliberately NO PyTorch. Stem separation runs through ONNX Runtime with the
+# DirectML execution provider, which is what gives us GPU acceleration on an
+# AMD card. See singcoach/analysis/separate.py.
+
+# !! INSTALL ORDER MATTERS — use scripts/setup.ps1, not a bare `pip install -r`.
+#
+# faster-whisper depends on stock `onnxruntime`, which installs into the SAME
+# module name as `onnxruntime-directml`. Whichever lands last wins. If stock
+# wins, DmlExecutionProvider silently disappears, separation falls back to CPU,
+# and nothing warns you — it just runs ~8x slower. So the DirectML build is
+# force-reinstalled last. It provides the CPU provider too, so faster-whisper's
+# VAD keeps working.
+#
+# numpy is capped below 2.5 because numba 0.66 requires <2.5, and losing numba
+# makes librosa's pYIN melody extraction unusably slow.
+
+# --- numerics / audio I/O -------------------------------------------------
+numpy>=1.26,<2.5
+scipy>=1.11
+soundfile>=0.12          # libsndfile bindings: wav/flac read+write
+soxr>=0.3                # fast, high-quality resampling
+
+# --- music analysis -------------------------------------------------------
+librosa>=0.11            # pYIN melody extraction, chroma, beat tracking
+numba>=0.59              # librosa's JIT backend; pYIN is unusably slow without it
+
+# --- realtime audio -------------------------------------------------------
+sounddevice>=0.4.6       # PortAudio duplex stream (WASAPI on Windows)
+
+# --- ML runtime -----------------------------------------------------------
+# NOTE: onnxruntime-directml must be (re)installed AFTER faster-whisper. See top.
+onnxruntime-directml>=1.17   # MDX-Net separation on the Radeon, CPU fallback built in
+faster-whisper>=1.0          # CTranslate2 Whisper, int8 CPU, word-level timestamps
+
+# --- offline DSP rendering -----------------------------------------------
+pedalboard>=0.9          # Rubber Band pitch-shift / time-stretch for transpose & slow-down
+
+# --- UI -------------------------------------------------------------------
+PySide6>=6.7
+pyqtgraph>=0.13
+
+# --- dev ------------------------------------------------------------------
+pytest>=8.0

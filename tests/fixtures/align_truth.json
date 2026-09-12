@@ -1,0 +1,82 @@
+{
+  "sample_rate": 16000,
+  "duration_s": 17.0,
+  "text": "hello there my friend sing with me now stay the morning light is gone away",
+  "words": [
+    {
+      "word": "HELLO",
+      "start": 1.0,
+      "end": 1.441
+    },
+    {
+      "word": "THERE",
+      "start": 1.55,
+      "end": 1.923
+    },
+    {
+      "word": "MY",
+      "start": 2.1,
+      "end": 2.385
+    },
+    {
+      "word": "FRIEND",
+      "start": 2.45,
+      "end": 2.88
+    },
+    {
+      "word": "SING",
+      "start": 5.0,
+      "end": 5.502
+    },
+    {
+      "word": "WITH",
+      "start": 5.5,
+      "end": 5.796
+    },
+    {
+      "word": "ME",
+      "start": 5.9,
+      "end": 6.18
+    },
+    {
+      "word": "NOW",
+      "start": 6.4,
+      "end": 6.699
+    },
+    {
+      "word": "STAY",
+      "start": 9.0,
+      "end": 9.431
+    },
+    {
+      "word": "THE",
+      "start": 12.0,
+      "end": 12.265
+    },
+    {
+      "word": "MORNING",
+      "start": 12.35,
+      "end": 12.834
+    },
+    {
+      "word": "LIGHT",
+      "start": 13.0,
+      "end": 13.354
+    },
+    {
+      "word": "IS",
+      "start": 13.5,
+      "end": 13.886
+    },
+    {
+      "word": "GONE",
+      "start": 13.9,
+      "end": 14.32
+    },
+    {
+      "word": "AWAY",
+      "start": 14.5,
+      "end": 14.937
+    }
+  ]
+}
