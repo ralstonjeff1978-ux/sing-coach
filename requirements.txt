@@ -32,6 +32,8 @@ sounddevice>=0.4.6       # PortAudio duplex stream (WASAPI on Windows)
 # --- ML runtime -----------------------------------------------------------
 # NOTE: onnxruntime-directml must be (re)installed AFTER faster-whisper. See top.
 onnxruntime-directml>=1.17   # MDX-Net separation on the Radeon, CPU fallback built in
+                             # Also runs the optional HTDemucs/BS-Roformer ONNX
+                             # upgrade (see README) — no extra dependency needed.
 faster-whisper>=1.0          # CTranslate2 Whisper, int8 CPU, word-level timestamps
 
 # --- offline DSP rendering -----------------------------------------------

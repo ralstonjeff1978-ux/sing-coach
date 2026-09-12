@@ -66,6 +66,65 @@ class PracticeToggles:
 
 
 @dataclass
+class SeparatorConfig:
+    """Which vocal-separation backend to use, and where its model file lives.
+
+    SingCoach ships one small MDX-Net ONNX model (~66 MB, always present) and
+    can optionally use a much stronger — but much larger — 2026-class model:
+    an **HTDemucs** or **BS-Roformer / Mel-Roformer** ONNX export. The big model
+    is *not* downloaded automatically; you drop the ``.onnx`` file into
+    ``models/`` yourself (see the README). If it is not there, separation falls
+    back to MDX-Net rather than failing.
+
+    ``backend`` values:
+
+    * ``"auto"``     — use the HQ model if its file is present, otherwise MDX-Net.
+    * ``"mdx"``      — always MDX-Net, even if an HQ file is present.
+    * ``"htdemucs"`` — require the HQ (waveform) model; still falls back to
+                       MDX-Net if the file is missing or fails to load, so a
+                       typo in the filename can never brick separation.
+
+    The remaining fields describe the HQ model's I/O so the loader is correct
+    without having to guess. Defaults match the HTDemucs-FT ONNX export
+    (input ``mix`` ``(1, 2, 343980)`` f32 @ 44.1 kHz, output ``stems``
+    ``(1, 4, 2, 343980)`` ordered ``[drums, bass, other, vocals]``). For a
+    2-stem BS-Roformer vocal export, set ``hq_num_stems=2`` and
+    ``hq_vocals_index=0``.
+    """
+
+    backend: str = "auto"
+    #: Filename (under ``models/``) of the HQ ONNX model to look for.
+    hq_model_file: str = "htdemucs_ft_vocals.onnx"
+    #: Index of the vocals stem in the model's output. Demucs order is
+    #: [drums, bass, other, vocals] -> 3. A vocals-only or 2-stem export is 0.
+    hq_vocals_index: int = 3
+    #: Number of stems the model outputs (4 for HTDemucs, 2 for a vocal Roformer).
+    hq_num_stems: int = 4
+    #: Fixed input length (samples) the model expects. 0 means "read it from the
+    #: ONNX input shape at load time", which is the safest choice.
+    hq_segment_samples: int = 0
+    #: Overlap fraction between consecutive chunks for overlap-add reconstruction.
+    hq_overlap: float = 0.25
+    #: Smallest plausible size (bytes) for the HQ file to count as present. A
+    #: smaller file is treated as a truncated/placeholder download and ignored,
+    #: so a half-finished copy falls back to MDX instead of crashing ONNX.
+    hq_min_bytes: int = 1_000_000
+
+    #: Backends we know how to build. Anything else is coerced to "auto".
+    _VALID = ("auto", "mdx", "htdemucs")
+
+    def normalised_backend(self) -> str:
+        b = (self.backend or "auto").strip().lower()
+        # A few friendly aliases for the same waveform backend.
+        if b in ("roformer", "bs-roformer", "bs_roformer", "mel-roformer",
+                 "mel_band_roformer", "demucs", "hq"):
+            return "htdemucs"
+        if b == "mdx-net":
+            return "mdx"
+        return b if b in self._VALID else "auto"
+
+
+@dataclass
 class Settings:
     # -- audio devices ------------------------------------------------------
     output_device: str | None = None
@@ -105,6 +164,11 @@ class Settings:
     #: Normalise every song to this integrated loudness at playback time.
     target_lufs: float = -18.0
 
+    # -- separation ---------------------------------------------------------
+    #: Vocal-separation backend selection and HQ-model geometry. See
+    #: :class:`SeparatorConfig`.
+    separator: SeparatorConfig = field(default_factory=SeparatorConfig)
+
     # -- practice -----------------------------------------------------------
     practice: PracticeToggles = field(default_factory=PracticeToggles)
     #: Comfortable range from the Range Wizard, as MIDI note numbers.
@@ -126,7 +190,9 @@ class Settings:
     def from_dict(cls, data: dict[str, Any]) -> "Settings":
         data = dict(data)
         practice = data.pop("practice", {}) or {}
-        known = {f for f in cls.__dataclass_fields__ if f != "practice"}
+        separator = data.pop("separator", {}) or {}
+        nested = {"practice", "separator"}
+        known = {f for f in cls.__dataclass_fields__ if f not in nested}
         # Drop unknown keys so an older settings file never crashes a newer app.
         clean = {k: v for k, v in data.items() if k in known}
         toggles = PracticeToggles(
@@ -136,7 +202,16 @@ class Settings:
                 if k in PracticeToggles.__dataclass_fields__
             }
         )
-        return cls(practice=toggles, **clean)
+        # Same forward-compat filtering for the separator block: an unknown key
+        # (e.g. one written by a newer build) is ignored rather than fatal.
+        sep = SeparatorConfig(
+            **{
+                k: v
+                for k, v in separator.items()
+                if k in SeparatorConfig.__dataclass_fields__
+            }
+        )
+        return cls(practice=toggles, separator=sep, **clean)
 
     def latency_ms(self) -> float:
         """Total offset to subtract from 'now' when looking up the target note."""

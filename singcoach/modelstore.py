@@ -29,6 +29,13 @@ class ModelSpec:
     url: str
     size_bytes: int
     description: str
+    #: Whether ``ensure`` may fetch this over the network. Multi-GB, hardware-
+    #: specific models are placed by hand instead — see ``min_bytes``.
+    auto_download: bool = True
+    #: For manually-placed models whose exact size we do not pin (``size_bytes``
+    #: == 0): the smallest file we will accept as a real model rather than a
+    #: truncated download.
+    min_bytes: int = 0
 
     @property
     def path(self) -> Path:
@@ -65,6 +72,27 @@ MODELS: dict[str, ModelSpec] = {
             "muddier vocal. Selectable in settings when a song separates poorly."
         ),
     ),
+    # High-quality 2026-class upgrade. NOT auto-downloaded: it is large and
+    # best run on a GPU box, so the user places the .onnx by hand and separation
+    # falls back to MDX-Net until it is present. See singcoach.analysis.roformer
+    # and the README section "Upgrading the separation model".
+    "separator_hq": ModelSpec(
+        key="separator_hq",
+        filename="htdemucs_ft_vocals.onnx",
+        url="https://huggingface.co/StemSplitio/htdemucs-ft-vocals-onnx",
+        size_bytes=0,          # exact size varies by export; not pinned
+        min_bytes=1_000_000,   # anything smaller is a truncated/placeholder file
+        auto_download=False,
+        description=(
+            "HTDemucs-FT (Hybrid Transformer Demucs, vocal-tuned) ONNX export — "
+            "a waveform-domain 2026-class model well above MDX-Net. Input 'mix' "
+            "(1, 2, 343980) f32 @ 44.1 kHz; output 'stems' (1, 4, 2, 343980) "
+            "ordered [drums, bass, other, vocals]. Drop the .onnx into models/ "
+            "as htdemucs_ft_vocals.onnx. Alternatives of the same class: "
+            "silverdaw/mel-band-roformer-vocals-onnx (Mel-Band Roformer) and "
+            "puar-playground/bs-roformer (2-stem BS-Roformer)."
+        ),
+    ),
 }
 
 MODELS["aligner"] = ModelSpec(
@@ -99,6 +127,10 @@ def is_present(key: str) -> bool:
     # A truncated download is worse than a missing one: ONNX would fail with an
     # opaque protobuf error. Treat a wrong-sized file as absent.
     actual = spec.path.stat().st_size
+    if spec.size_bytes == 0:
+        # Size not pinned (a manually-placed model): accept anything above the
+        # floor, reject an obviously truncated placeholder.
+        return actual >= max(1, spec.min_bytes)
     return abs(actual - spec.size_bytes) <= max(4096, spec.size_bytes // 100)
 
 
@@ -107,6 +139,14 @@ def ensure(key: str, *, progress: ProgressFn | None = None) -> Path:
     spec = MODELS[key]
     if is_present(key):
         return spec.path
+
+    if not spec.auto_download:
+        raise DownloadFailed(
+            f"{spec.filename} is not downloaded automatically.\n"
+            f"  Get it from: {spec.url}\n"
+            f"  Then drop the .onnx file in: {MODELS_DIR}\n"
+            f"  {spec.description}"
+        )
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     tmp = spec.path.with_suffix(spec.path.suffix + ".partial")

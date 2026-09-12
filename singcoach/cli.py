@@ -268,9 +268,28 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
         print(f"  audio devices       PROBLEM — {exc}")
         ok = False
 
-    for key in ("separator",):
-        state = "present" if modelstore.is_present(key) else "not downloaded yet"
-        print(f"  model[{key}]    {state}")
+    state = "present" if modelstore.is_present("separator") else "not downloaded yet"
+    print(f"  model[separator]    {state}  (MDX-Net, ~66 MB, always available)")
+
+    # High-quality optional backend: report presence and which model will run.
+    from .analysis.separator import hq_model_path, hq_present
+
+    cfg = config.load_settings().separator
+    requested = cfg.normalised_backend()
+    hq_path = hq_model_path(cfg)
+    if hq_present(cfg):
+        print(f"  model[separator_hq] present  ({hq_path})")
+    else:
+        print(f"  model[separator_hq] not present - drop {cfg.hq_model_file} in "
+              f"{config.MODELS_DIR} to enable")
+        print(f"                      get it: {modelstore.MODELS['separator_hq'].url}")
+    if requested == "mdx":
+        active = "MDX-Net (forced by config)"
+    elif hq_present(cfg):
+        active = f"HTDemucs/Roformer HQ ({cfg.hq_model_file})"
+    else:
+        active = "MDX-Net (HQ model absent -> graceful fallback)"
+    print(f"  separator backend   config='{requested}' -> will use {active}")
 
     print()
     print("All good." if ok else "Problems found — see above.")

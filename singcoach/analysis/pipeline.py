@@ -16,10 +16,10 @@ import json
 from dataclasses import dataclass
 from typing import Callable
 
-from .. import modelstore
+from .. import config
 from ..library.song import Song
 from . import key_beats, lyrics as lyrics_mod, melody
-from .separate import separate_song
+from .separator import separate_to_files
 
 ProgressFn = Callable[[str, float], None]
 
@@ -58,25 +58,29 @@ def analyse_song(
     prefer_gpu: bool = True,
     skip_lyrics: bool = False,
     lyrics_model: str = lyrics_mod.DEFAULT_MODEL,
+    settings: "config.Settings | None" = None,
 ) -> list[StageResult]:
     """Run every offline stage that has not already been cached."""
     results: list[StageResult] = []
     paths = song.paths
+    if settings is None:
+        settings = config.load_settings()
 
     # -- separation ---------------------------------------------------------
     if song.is_separated and not force:
         results.append(StageResult("separate", True, {}))
         progress("separate: cached", 0.35)
     else:
-        model = modelstore.ensure("separator", progress=_scoped(progress, "model", 0.0, 0.05))
-        detail = separate_song(
+        # Picks the high-quality backend if its model file is present, otherwise
+        # falls back to MDX-Net. The chosen backend is recorded in the detail.
+        detail = separate_to_files(
             paths.source_wav,
             paths.vocals,
             paths.accompaniment,
-            model,
-            n_fft=SEPARATOR_N_FFT,
+            settings=settings,
             prefer_gpu=prefer_gpu,
-            progress=_scoped(progress, "separate", 0.05, 0.35),
+            mdx_n_fft=SEPARATOR_N_FFT,
+            progress=_scoped(progress, "separate", 0.0, 0.35),
         )
         song.mark_stage("separate")
         results.append(StageResult("separate", False, detail))

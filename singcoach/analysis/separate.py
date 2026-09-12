@@ -86,6 +86,10 @@ class SeparationError(RuntimeError):
 
 
 class MDXSeparator:
+    #: Stable identifier for this backend, surfaced in the UI/CLI and used by
+    #: :mod:`singcoach.analysis.separator` to report which model actually ran.
+    backend: str = "mdx-net"
+
     def __init__(
         self,
         model_path: Path,
